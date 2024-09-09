@@ -3,6 +3,9 @@ import { SafeAreaView, StyleSheet, TouchableOpacity, Alert, TextInput, Text, Vie
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { AppContext } from "../../AppContext";
+import axios from 'axios'; // Import axios
+
+const API_URL = 'http://192.168.100.129:3000/reports';
 
 const TextInputProduction = () => {
     const [alat, setAlat] = useState('');
@@ -12,54 +15,41 @@ const TextInputProduction = () => {
     const [tipe, setTipe] = useState('');
     const [ritase, setRitase] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
-    const { homeData, saveHomeData } = useContext(AppContext);
     const route = useRoute();
     const navigation = useNavigation();
-    const [productionData, setProductionData] = useState(homeData);
+    const { homeData } = route.params || {};
+    const { saveHomeData } = useContext(AppContext);
 
    useEffect(() => {
-        if (route.params?.homeData) {
-            setProductionData(route.params.homeData);
-            console.log('Production data:', route.params.homeData); // Debug
+        if (homeData) {
+            console.log(homeData);
         }
-    }, [route.params?.homeData]);
+    }, [homeData]);
 
-    const handleSubmit = async () => {
-    if (alat && timbunan && material && jarak && tipe && ritase) {
-        const newProductionData = {
-            ...productionData,
-            alat,
-            timbunan,
-            material,
-            jarak,
-            tipe,
-            ritase,
-        };
+    const handleSaveData = async () => {
+        if (!alat || !timbunan || !material || !jarak || !tipe || !ritase) {
+            Alert.alert('Error', 'Semua field harus diisi');
+            return;
+        }
 
-        // Alert.alert("Data Tersimpan", "Data telah disimpan!");
-        setModalVisible(true);
+       const data = { tanggal: new Date(), shift: '', grup: '', pengawas: '', lokasi: '', status: '', pic: '', alat, timbunan, material, jarak, tipe, ritase };
 
-        // Simpan data baru ke AsyncStorage dan ke context
-        await saveHomeData(newProductionData);
-
-        // Clear input fields after submission
+         try {
+        // Kirim data ke server
+        const response = await axios.post(API_URL, data);
+        console.log('Data berhasil dikirim:', response.data);
+        saveHomeData(data);
         setAlat('');
         setTimbunan('');
         setMaterial('');
         setJarak('');
         setTipe('');
         setRitase('');
-
-        // Navigate to ReportStack
-        // navigation.navigate('ReportStack', {
-        //     screen: 'ProductionReport',
-        //     params: { productionData: newProductionData }
-        // });
-    } else {
-        Alert.alert("Error", "Mohon lengkapi semua data.");
+        setModalVisible(true);
+    } catch (error) {
+        console.error('Error mengirim data:', error);
     }
 };
-
 
 return(
     <SafeAreaView>
@@ -114,7 +104,7 @@ return(
 
         <TouchableOpacity
             style={styles.button}
-            onPress={handleSubmit}>
+            onPress={handleSaveData}>
             <Text style={styles.buttonText}>SUBMIT</Text>
         </TouchableOpacity>
 

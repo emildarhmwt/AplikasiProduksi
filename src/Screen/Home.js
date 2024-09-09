@@ -5,6 +5,9 @@ import { Picker } from '@react-native-picker/picker';
 // import DatePicker from 'react-native-date-picker';
 import { AppContext } from "../../AppContext";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import axios from 'axios'; // Import axios
+
+const API_URL = 'http://192.168.100.129:3000/reports';
 
 const TextInputOperation = ({ navigation }) => {
     const { saveHomeData } = useContext(AppContext); // Menggunakan context untuk menyimpan data
@@ -12,7 +15,7 @@ const TextInputOperation = ({ navigation }) => {
     const [tanggalString, setTanggalString] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [shift, setShift] = useState('');
-    const [group, setGroup] = useState('');
+    const [grup, setGrup] = useState('');
     const [pengawas, setPengawas] = useState('');
     const [lokasi, setLokasi] = useState('');
     const [status, setStatus] = useState('');
@@ -23,29 +26,37 @@ const TextInputOperation = ({ navigation }) => {
         const currentDate = selectedDate || tanggal;
         setShowDatePicker(false);
         setTanggal(currentDate);
-        setTanggalString(currentDate.toLocaleDateString()); // Memperbarui representasi tanggal dalam bentuk string
+        setTanggalString(currentDate.toISOString().split('T')[0]); // Memperbarui representasi tanggal dalam bentuk string
     };
 
-    const handleSubmit = () => {
-        const data = { tanggal: tanggalString, shift, group, pengawas, lokasi, status, pic };
+   const handleSubmit = async () => {
+        const data = { tanggal: tanggalString, shift, grup, pengawas, lokasi, status, pic };
         saveHomeData(data); // Menyimpan data ke context
 
        // Clear input fields after submission
-        setTanggal(new Date());
-        setTanggalString('');
-        setShift('');
-        setGroup('');
-        setPengawas('');
-        setLokasi('');
-        setStatus('');
-        setPic('');
+       try {
+            // Kirim data ke server
+            const response = await axios.post(API_URL, data);
+            console.log('Data berhasil dikirim:', response.data);
+            
+            setTanggal(new Date());
+            setTanggalString('');
+            setShift('');
+            setGrup('');
+            setPengawas('');
+            setLokasi('');
+            setStatus('');
+            setPic('');
 
-        if (status === 'PRODUCTION') {
-            navigation.navigate('Data', { homeData: data });// Navigasi ke layar Data
-        } else if (status === 'HOUR_METER') {
-            navigation.navigate('HM'); // Navigasi ke layar HM
-        } else {
-            setModalVisible(true); // Tampilkan modal jika status tidak valid
+            if (status === 'PRODUCTION') {
+                navigation.navigate('Data', { homeData: data });
+            } else if (status === 'HOUR_METER') {
+                navigation.navigate('HM');
+            } else {
+                setModalVisible(true);
+            }
+        } catch (error) {
+            console.error('Error mengirim data:', error);
         }
     };
 
@@ -82,8 +93,8 @@ return(
 
                 <TextInput
                     style={styles.input}
-                    onChangeText={setGroup}
-                    value={group}
+                    onChangeText={setGrup}
+                    value={grup}
                     placeholder="GROUP"
                     placeholderTextColor="#888"
                 />
@@ -125,8 +136,8 @@ return(
                         style={styles.picker}
                     >
                         <Picker.Item label="DIVISI" value="" />
-                        <Picker.Item label="DIVISI1" value="TIDAK JALAN" />
-                        <Picker.Item label="DIVISI2" value="JALAN" />
+                        <Picker.Item label="DIVISI1" value="DIVISI1" />
+                        <Picker.Item label="DIVISI2" value="DIVISI2" />
                     </Picker>
                 </View>
 
